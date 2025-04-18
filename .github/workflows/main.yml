@@ -1,0 +1,40 @@
+name: Cafe Management System CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+
+    - name: Install dependencies for all services
+      run: |
+        cd customer-services && npm install && cd ..
+        cd order-services && npm install && cd ..
+        cd inventory-services && npm install && cd ..
+        cd payment-services && npm install && cd ..
+        cd menu-services && npm install && cd ..
+        cd api-gateway && npm install && cd ..
+
+    - name: Build Docker images
+      run: docker-compose build
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+    - name: Push Docker images
+      run: docker-compose push 
